@@ -60,7 +60,7 @@ public class SysUserController {
             return Result.error(CommonConstant.BAD_REQUEST_CODE, "Real name cannot be empty");
         }
 
-        String verifyCode = jsonObject.getString("verifyCode ");
+        String verifyCode = jsonObject.getString("verifyCode");
         if (StringUtils.isBlank(verifyCode )) {
             return Result.error(CommonConstant.BAD_REQUEST_CODE, "verifyCode  cannot be empty");
         }
