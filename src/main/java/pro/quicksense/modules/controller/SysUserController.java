@@ -175,7 +175,7 @@ public class SysUserController {
         return Result.success("User info", user);
     }
 
-    @GetMapping("/sendEmail")
+    @PostMapping("/sendEmail")
     public Result<?> sendEmail(@RequestParam(value = "email") String email) {
         try {
             emailUtil.sendSimpleMail(email);
