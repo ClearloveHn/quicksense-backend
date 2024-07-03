@@ -26,10 +26,10 @@ import java.util.Objects;
 @Slf4j
 @RestController
 @RequestMapping("/user")
-public class SysUserController {
+public class UserController {
 
     @Autowired
-    private ISysUserService sysUserService;
+    private UserService UserService;
 
     @Autowired
     private EmailUtil emailUtil;
