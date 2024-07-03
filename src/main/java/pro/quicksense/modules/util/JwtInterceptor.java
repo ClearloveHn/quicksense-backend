@@ -5,12 +5,16 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import pro.quicksense.modules.common.CommonConstant;
+import pro.quicksense.modules.entity.User;
+
+import java.util.Date;
 
 @Component
 public class JwtInterceptor implements HandlerInterceptor {
@@ -47,5 +51,18 @@ public class JwtInterceptor implements HandlerInterceptor {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
             return false;
         }
+    }
+
+    public String generateToken(User user) {
+        // Set token expiration time, here set to 1 day
+        Date expiration = new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000);
+
+        return Jwts.builder()
+                .setSubject(user.getUsername())
+                .claim("userId", user.getId())
+                .setIssuedAt(new Date())
+                .setExpiration(expiration)
+                .signWith(SignatureAlgorithm.HS512, "secret")  // todo For testing only, please use a different secret key in production
+                .compact();
     }
 }
