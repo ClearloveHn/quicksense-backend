@@ -19,7 +19,7 @@ import java.util.Date;
 
 @Service
 @Slf4j
-public class SysUserServiceImpl extends ServiceImpl<UserMapper, User> implements ISysUserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     @Override
     public Result<String> checkUserIsEffective(User user) {
