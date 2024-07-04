@@ -28,7 +28,6 @@ public class User implements Serializable {
 
     private String realname;
 
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @TableField(exist = false)
