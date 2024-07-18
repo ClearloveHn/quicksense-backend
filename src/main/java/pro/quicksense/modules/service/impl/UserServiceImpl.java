@@ -8,9 +8,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import pro.quicksense.modules.common.CommonConstant;
 import pro.quicksense.modules.entity.EmailLoginRequest;
 import pro.quicksense.modules.entity.LoginRequest;
@@ -21,6 +21,7 @@ import pro.quicksense.modules.util.CodeUtil;
 import pro.quicksense.modules.util.EmailUtil;
 import org.springframework.http.ResponseEntity;
 import pro.quicksense.modules.util.JwtInterceptor;
+
 
 
 import java.util.ArrayList;
@@ -37,8 +38,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final CodeUtil codeUtil;
     private final JwtInterceptor jwtInterceptor;
 
-
-    @Transactional
     public ResponseEntity<?> registerUser(User user) {
         // Perform all validations
         ResponseEntity<?> validationResult = validateUser(user);
@@ -54,16 +53,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             this.save(user);
         } catch (DataIntegrityViolationException e) {
             log.error("Username or email already exists", e);
-            return ResponseEntity.status(CommonConstant.INTERNAL_SERVER_ERROR_CODE).body("Username or email already exists");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Username or email already exists");
         } catch (Exception e) {
             log.error("Error during user registration", e);
-            return ResponseEntity.status(CommonConstant.INTERNAL_SERVER_ERROR_CODE).body("An error occurred during registration");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during registration");
         }
 
         return ResponseEntity.ok("User registration successful");
     }
 
-    @Override
     public ResponseEntity<?> login(LoginRequest loginRequest) {
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getUsername, loginRequest.getUsername());
@@ -79,20 +77,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         boolean matches = passwordEncoder.matches(loginRequest.getPassword(), user.getPassword());
         if (!matches) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("Incorrect username or password");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect username or password");
         }
 
         // Login successful, generate token and return
         String token = jwtInterceptor.generateToken(user);
-        return ResponseEntity.status(CommonConstant.SUCCESS_CODE).body(token);
+        return ResponseEntity.status(HttpStatus.OK).body(token);
     }
 
-    @Override
     public ResponseEntity<?> loginByEmail(EmailLoginRequest request) {
 
         // verify code check
         if (!codeUtil.verifyCode(request.getEmail(), request.getVerifyCode(), CommonConstant.KEY_PREFIX)) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("Verification code error");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Verification code error");
         }
 
         // Check if the user exists
@@ -100,27 +97,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.eq(User::getEmail, request.getEmail());
         User user = this.getOne(queryWrapper);
         if (user == null) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("User not found");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found");
         }
 
         // Login successful, generate token and return
         String token = jwtInterceptor.generateToken(user);
-        return ResponseEntity.status(CommonConstant.SUCCESS_CODE).body(token);
+        return ResponseEntity.status(HttpStatus.OK).body(token);
     }
 
-    @Transactional
     public ResponseEntity<?> editUser(User user) {
         try {
             user.setUpdateTime(new Date());
             this.updateById(user);
         } catch (Exception e) {
             log.error("Error during user edit", e);
-            return ResponseEntity.status(CommonConstant.INTERNAL_SERVER_ERROR_CODE).body("An error occurred during user edit");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during user edit");
         }
         return ResponseEntity.ok("User edit successful");
     }
 
-    @Override
     public ResponseEntity<?> getUserInfo(String userId) {
         List<User> userList = new ArrayList<>();
         if (StringUtils.isNotBlank(userId)) {
@@ -132,14 +127,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return ResponseEntity.ok(userList);
     }
 
-    @Override
+
     public ResponseEntity<?> sendEmail(String email) {
 
         try {
             emailUtil.sendSimpleMail(email);
         } catch (Exception e) {
             log.error("Error during email sending", e);
-            return ResponseEntity.status(CommonConstant.INTERNAL_SERVER_ERROR_CODE).body("An error occurred during email sending");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during email sending");
         }
 
         return ResponseEntity.ok("Email sent successfully");
@@ -149,12 +144,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // The user does not exist
         if (ObjectUtil.isEmpty(user)) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("The user does not exist. Please sign up.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The user does not exist. Please sign up.");
         }
 
         // The user account is frozen.
         if (CommonConstant.USER_STATUS_FROZEN.equals(user.getStatus())) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("The user account is frozen.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The user account is frozen.");
         }
 
         return null; // The user is valid
@@ -163,47 +158,47 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private ResponseEntity<?> validateUser(User user) {
 
         if (StringUtils.isBlank(user.getUsername())) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("Username cannot be empty");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username cannot be empty");
         }
 
         if (StringUtils.isBlank(user.getEmail())) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("Email cannot be empty");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email cannot be empty");
         }
 
         if (StringUtils.isBlank(user.getPassword())) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("Password cannot be empty");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password cannot be empty");
         }
 
         if (StringUtils.isBlank(user.getConfirmPassword())) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("Confirm password cannot be empty");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Confirm password cannot be empty");
         }
 
         if (StringUtils.isBlank(user.getRealname())) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("Real name cannot be empty");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Real name cannot be empty");
         }
 
         if (StringUtils.isBlank(user.getVerifyCode())) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("verifyCode cannot be empty");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("verifyCode cannot be empty");
         }
 
         // Validate email address format
         if (emailUtil.isInvalidEmail(user.getEmail())) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("Invalid email format");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid email format");
         }
 
         // Validate password format
         if (!isValidPassword(user.getPassword())) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("Password must contain letters, numbers, and special characters, and be 8-20 characters long");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password must contain letters, numbers, and special characters, and be 8-20 characters long");
         }
 
         // Check if password and confirm password are equal
         if (!user.getPassword().equals(user.getConfirmPassword())) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("Password and confirm password do not match");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password and confirm password do not match");
         }
 
         // Email verification
         if (!codeUtil.verifyCode(user.getEmail(), user.getVerifyCode(), CommonConstant.KEY_PREFIX)) {
-            return ResponseEntity.status(CommonConstant.BAD_REQUEST_CODE).body("Verification code error");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Verification code error");
         }
 
         return null; // Validation passed

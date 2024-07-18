@@ -8,13 +8,12 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import pro.quicksense.modules.common.CommonConstant;
-import pro.quicksense.modules.service.EmailService;
 
 import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
-public class EmailUtil implements EmailService {
+public class EmailUtil {
 
     @Autowired
     private JavaMailSender mailSender;
@@ -34,7 +33,7 @@ public class EmailUtil implements EmailService {
     @Value("${app.email.subject:QuickSense Registration}")
     private String emailSubject;
 
-    @Override
+
     public void sendSimpleMail(String toEmail) {
         if (isInvalidEmail(toEmail)) {
             log.error("Invalid email address: {}", toEmail);

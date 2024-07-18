@@ -49,4 +49,6 @@ public class UserController {
     public ResponseEntity<?> sendEmail(@RequestParam(value = "email") String email) {
         return userService.sendEmail(email);
     }
+
+    
 }
